@@ -1,0 +1,22 @@
+# Archivos de Python que no queremos subir a GitHub
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Archivos de configuración de tu sistema
+*.DS_Store
+
+# Datos temporales o personales
+.env
+*.csv
+*.xlsx
+
+# Entornos virtuales
+venv/
+.env/
+
+# Archivos grandes o innecesarios
+*.log
+*.zip
+*.tar.gz
