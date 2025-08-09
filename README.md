@@ -38,6 +38,18 @@ pyDipolAI/
 ├── README.md             # Project documentation
 └── .gitignore
 
+## 🖼️ Screenshots
+
+### 1. Main GUI Window
+![GUI Main Window](assets/gui_main.png)
+
+### 2. Load Dataset
+![Load Dataset](assets/load_dataset.png)
+
+### 3. Example of Model Fitting
+![Model Fit Example](assets/model_fit.png)
+
+
 📜 License
 MIT License — Free to use, modify, and distribute with attribution.
 
