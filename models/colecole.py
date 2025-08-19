@@ -9,7 +9,7 @@ class ColeColeModel(BaseModel):
         super().__init__("Cole-Cole")
         self.params_init = {
             'eps_inf': (None, 0.5, 10),
-            'eps_s': (None, 0.6, 20),
+            'eps_s': (None, 0.6, 500),
             'tau': (1e-4, 1e-9, 1e-1),
             'alpha': (0.2, 0.0, 1.0),
         }
@@ -18,14 +18,24 @@ class ColeColeModel(BaseModel):
         return self.params_init
 
     def set_auto_params_from_data(self, eps_real, n_points=5):
+        flex_factor = 1.5  # Ampliar el rango hasta ±150%
+
         avg_low_freq = np.mean(eps_real[:n_points])
         avg_high_freq = np.mean(eps_real[-n_points:])
 
         _, min_s, max_s = self.params_init['eps_s']
         _, min_inf, max_inf = self.params_init['eps_inf']
 
-        self.params_init['eps_s'] = (avg_low_freq, min_s, max_s)
-        self.params_init['eps_inf'] = (avg_high_freq, min_inf, max_inf)
+        self.params_init['eps_s'] = (
+            avg_low_freq,
+            min_s,
+            max(max_s, avg_low_freq * flex_factor)
+        )
+        self.params_init['eps_inf'] = (
+            avg_high_freq,
+            min_inf,
+            max(max_inf, avg_high_freq * flex_factor)
+        )
 
     def model_function(self, f, eps_inf, eps_s, tau, alpha):
             w = 2 * np.pi * f

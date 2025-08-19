@@ -2,53 +2,53 @@ from .base_model import BaseModel
 import numpy as np
 from lmfit import Model, Parameters
 
-class DebyeModel(BaseModel):
+class DebyeModulusModel(BaseModel):
     def __init__(self):
-        super().__init__("Debye")
-        # Inicialización: tau fijo, eps_s y eps_inf se calculan de datos
+        super().__init__("Debye Modulus")
+        # Inicialización: tau fijo, M_s y M_inf se calculan de datos
         self.params_init = {
-            'eps_inf': (None, None, None),  # se definen en set_auto_params_from_data
-            'eps_s': (None, None, None),    # se definen en set_auto_params_from_data
-            'tau': (1e-4, 1e-6, 1e-1),      # valor inicial y rango fijos
+            'M_inf': (None, None, None),  # se definen en set_auto_params_from_data
+            'M_s': (None, None, None),    # se definen en set_auto_params_from_data
+            'tau': (1e-4, 1e-6, 1e-1),    # valor inicial y rango fijos
         }
 
     def get_params(self):
         return self.params_init
 
-    def set_auto_params_from_data(self, eps_real, n_points=5):
+    def set_auto_params_from_data(self, M_real, n_points=5):
         """
-        Calcula eps_s y eps_inf automáticos y sus rangos en base a datos.
+        Calcula M_s y M_inf automáticos y sus rangos en base a datos.
         """
         flex_factor = 2
 
-        avg_low_freq = np.mean(eps_real[:n_points])   # baja frecuencia
-        avg_high_freq = np.mean(eps_real[-n_points:]) # alta frecuencia
+        avg_low_freq = np.mean(M_real[:n_points])   # baja frecuencia
+        avg_high_freq = np.mean(M_real[-n_points:]) # alta frecuencia
 
         # Definir valores y rangos calculados dinámicamente
-        self.params_init['eps_s'] = (
+        self.params_init['M_s'] = (
             avg_low_freq,
             avg_low_freq / flex_factor,
             avg_low_freq * flex_factor
         )
-        self.params_init['eps_inf'] = (
+        self.params_init['M_inf'] = (
             avg_high_freq,
             avg_high_freq / flex_factor,
             avg_high_freq * flex_factor
         )
 
-    def model_function(self, f, eps_inf, eps_s, tau):
+    def model_function(self, f, M_inf, M_s, tau):
         w = 2 * np.pi * f
-        denom = 1 + (w * tau)**2
-        eps_real = eps_inf + (eps_s - eps_inf) / denom
-        eps_imag = (eps_s - eps_inf) * w * tau / denom
-        return eps_real + 1j * eps_imag
+        denom = (M_inf)**2 + (M_s)**2 * (w * tau)**2
+        M_real = (M_inf * M_s) * (M_inf + M_s *(w * tau)**2) / denom
+        M_imag = (M_inf * M_s) * (M_inf - M_s) * (w * tau) / denom
+        return M_real + 1j * M_imag
 
-    def fit(self, f, eps_real, eps_imag, user_params=None):
-        def model_real(f, eps_inf, eps_s, tau):
-            return np.real(self.model_function(f, eps_inf, eps_s, tau))
+    def fit(self, f, M_real, M_imag, user_params=None):
+        def model_real(f, M_inf, M_s, tau):
+            return np.real(self.model_function(f, M_inf, M_s, tau))
 
-        def model_imag(f, eps_inf, eps_s, tau):
-            return np.imag(self.model_function(f, eps_inf, eps_s, tau))
+        def model_imag(f, M_inf, M_s, tau):
+            return np.imag(self.model_function(f, M_inf, M_s, tau))
 
         model_real_fit = Model(model_real)
         model_imag_fit = Model(model_imag)
@@ -73,8 +73,8 @@ class DebyeModel(BaseModel):
                     raise ValueError(f"Missing automatic value for parameter '{key}'. Did you call set_auto_params_from_data?")
                 params.add(key, value=val, min=minval, max=maxval)
 
-        result_real = model_real_fit.fit(eps_real, f=f, params=params)
-        result_imag = model_imag_fit.fit(eps_imag, f=f, params=result_real.params)
+        result_real = model_real_fit.fit(M_real, f=f, params=params)
+        result_imag = model_imag_fit.fit(M_imag, f=f, params=result_real.params)
 
         self.params = result_imag.params
         return result_real, result_imag

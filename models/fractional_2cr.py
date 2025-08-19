@@ -9,7 +9,7 @@ class Fractional2CRModel(BaseModel):
         super().__init__("Fracc-2CR")
         self.params_init = {
             'eps_inf': (None, 0.5, 10),
-            'eps_s': (None, 0.6, 20),
+            'eps_s': (None, 0.6, 500),
             'tau_alpha': (1e-4, 1e-9, 1e-1),
             'tau_beta': (1e-4, 1e-9, 1e-1),
             'alpha': (0.5, 0.01, 1.0), 
@@ -20,26 +20,38 @@ class Fractional2CRModel(BaseModel):
         return self.params_init
 
     def set_auto_params_from_data(self, eps_real, n_points=5):
+        flex_factor = 1.5  # Ampliar el rango hasta ±150%
+
         avg_low_freq = np.mean(eps_real[:n_points])
         avg_high_freq = np.mean(eps_real[-n_points:])
 
         _, min_s, max_s = self.params_init['eps_s']
         _, min_inf, max_inf = self.params_init['eps_inf']
 
-        self.params_init['eps_s'] = (avg_low_freq, min_s, max_s)
-        self.params_init['eps_inf'] = (avg_high_freq, min_inf, max_inf)
+        self.params_init['eps_s'] = (
+            avg_low_freq,
+            min_s,
+            max(max_s, avg_low_freq * flex_factor)
+        )
+        self.params_init['eps_inf'] = (
+            avg_high_freq,
+            min_inf,
+            max(max_inf, avg_high_freq * flex_factor)
+        )    
 
     def model_function(self, f, eps_inf, eps_s, tau_alpha, tau_beta, alpha, beta):
-            w = 2 * np.pi * f
+        w = 2 * np.pi * f
 
-            B1 = (w * tau_alpha) ** (-alpha) * np.cos(alpha * np.pi / 2) + (w * tau_beta) ** (-beta) * np.cos(beta * np.pi / 2)
-            B2 = (w * tau_alpha) ** (-alpha) * np.sin(alpha * np.pi / 2) + (w * tau_beta) ** (-beta) * np.sin(beta * np.pi / 2)
+        B1 = (w * tau_alpha) ** (-alpha) * np.cos(alpha * np.pi / 2) + \
+             (w * tau_beta) ** (-beta) * np.cos(beta * np.pi / 2)
+        B2 = (w * tau_alpha) ** (-alpha) * np.sin(alpha * np.pi / 2) + \
+             (w * tau_beta) ** (-beta) * np.sin(beta * np.pi / 2)
 
-            # Ecuaciones de ε′ y ε″ como parte de un número complejo
-            eps_real = eps_s - ((eps_s - eps_inf) * (1 + B1)) / ((1 + B1)**2 + B2**2)
-            eps_imag = ((eps_s - eps_inf) * B2) / ((1 + B1)**2 + B2**2)
+        # Ecuaciones de ε′ y ε″ como parte de un número complejo
+        eps_real = eps_s - ((eps_s - eps_inf) * (1 + B1)) / ((1 + B1)**2 + B2**2)
+        eps_imag = ((eps_s - eps_inf) * B2) / ((1 + B1)**2 + B2**2)
 
-            return eps_real + 1j * eps_imag  # NOTA: Usamos +1j aquí porque lmfit maneja np.real e np.imag por separado
+        return eps_real + 1j * eps_imag  # NOTA: Usamos +1j aquí porque lmfit maneja np.real e np.imag por separado
 
     def fit(self, f, eps_real, eps_imag, user_params=None):
         def model_real(f, eps_inf, eps_s, tau_alpha, tau_beta, alpha, beta):
