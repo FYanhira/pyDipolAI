@@ -4,7 +4,7 @@ from lmfit import Model, Parameters
 
 class Fract1crModulusModel(BaseModel):
     def __init__(self):
-        super().__init__("HN Modulus")
+        super().__init__("Fract1cr Modulus")
         # Inicialización: tau fijo, M_s y M_inf se calculan de datos
         self.params_init = {
             'M_inf': (None, None, None),  # se definen en set_auto_params_from_data

@@ -18,7 +18,7 @@ class ColeDavidsonModel(BaseModel):
         return self.params_init
 
     def set_auto_params_from_data(self, eps_real, n_points=5):
-        flex_factor = 1  # Ampliar el rango hasta ±100%
+        flex_factor = 1.5  # Ampliar el rango hasta ±150%
 
         avg_low_freq = np.mean(eps_real[:n_points])
         avg_high_freq = np.mean(eps_real[-n_points:])
