@@ -38,8 +38,9 @@ class DebyeModulusModel(BaseModel):
 
     def model_function(self, f, M_inf, M_s, tau):
         w = 2 * np.pi * f
-        denom = (M_inf)**2 + (M_s)**2 * (w * tau)**2
-        M_real = (M_inf * M_s) * (M_inf + M_s *(w * tau)**2) / denom
+        denom = M_inf**2 + (M_s * w * tau)**2
+    
+        M_real = (M_inf * M_s) * (M_inf + M_s * (w * tau)**2) / denom
         M_imag = (M_inf * M_s) * (M_inf - M_s) * (w * tau) / denom
         return M_real + 1j * M_imag
 

@@ -17,6 +17,7 @@ from models.coledavidson import ColeDavidsonModel
 from models.havriliak_negami import HavriliakNegamiModel
 from models.fractional_1cr import Fractional1CRModel
 from models.fractional_2cr import Fractional2CRModel
+from models.Ionic_conductivity import IonicModel
 
 from models.Debye_modulus import DebyeModulusModel
 from models.Colecole_modulus import ColeColeModulusModel
@@ -24,6 +25,7 @@ from models.ColeDavidson_modulus import ColeDavidsonModulusModel
 from models.HN_modulus import HNModulusModel
 from models.fract_1cr_modulus import Fract1crModulusModel
 from models.fract_2cr_modulus import Fract2crModulusModel
+from models.MWS_Relax_modulus import MWSModulusModel
 
 # ================== métricas ==================
 def mean_absolute_deviation(y_true, y_pred):
@@ -58,17 +60,19 @@ class DielectricGUI:
             'Cole-Cole': ColeColeModel(),
             'Cole-Davidson': ColeDavidsonModel(),
             'Havriliak-Negami': HavriliakNegamiModel(),
-            'Fracc-1CR': Fractional1CRModel(),
-            'Fracc-2CR': Fractional2CRModel(),
-            'DebyeModulus': DebyeModulusModel(),
-            'ColeColeModulus': ColeColeModulusModel(),
-            'ColeDavidsonModulus': ColeDavidsonModulusModel(),
-            'HNModulus': HNModulusModel(),
-            'Fract1crModulus': Fract1crModulusModel(),
-            'Fract2crModulus': Fract2crModulusModel(),
+            'Fractional-1CR': Fractional1CRModel(),
+            'Fractional-2CR': Fractional2CRModel(),
+            'Ionic': IonicModel(),
+            'Debye_Modulus': DebyeModulusModel(),
+            'Cole-Cole_Modulus': ColeColeModulusModel(),
+            'Cole-Davidson_Modulus': ColeDavidsonModulusModel(),
+            'Havriliak-Negami_Modulus': HNModulusModel(),
+            'Fractional-1CR_Modulus': Fract1crModulusModel(),
+            'Fractional-2CR_Modulus': Fract2crModulusModel(),
+            'MWS_Modulus': MWSModulusModel(),
         }
-        self.permittivity_models = {k:self.registered_models[k] for k in list(self.registered_models.keys())[:6]}
-        self.modulus_models      = {k:self.registered_models[k] for k in list(self.registered_models.keys())[6:]}
+        self.permittivity_models = {k:self.registered_models[k] for k in list(self.registered_models.keys())[:7]}
+        self.modulus_models      = {k:self.registered_models[k] for k in list(self.registered_models.keys())[7:]}
 
         # --- layout ---
         self.top_control_frame = tk.Frame(root)
@@ -116,11 +120,14 @@ class DielectricGUI:
         # === Fit Results -> ahora ScrolledText (en lugar de Canvas+Frame) ===
         self.result_container = tk.LabelFrame(self.top_control_frame, text="Fit Results")
         self.result_container.grid(row=0, column=5, rowspan=2, sticky='nsew', padx=5)
-        self.result_text = scrolledtext.ScrolledText(self.result_container, height=14, width=70, wrap=tk.WORD)
+        self.result_text = scrolledtext.ScrolledText(self.result_container, height=16, width=70, wrap=tk.WORD)
         self.result_text.pack(fill='both', expand=True)
 
-        self.plot_frame = tk.Frame(root, height=520)
+        self.plot_frame = tk.Frame(root, height=800)
         self.plot_frame.pack(fill=tk.BOTH, expand=True)
+        root.rowconfigure(1, weight=1)      # Asume que top_control_frame está en row 0
+        root.columnconfigure(0, weight=1)
+
 
         self.update_model_list()
 
@@ -256,14 +263,32 @@ class DielectricGUI:
         eps_imag = np.imag(self.data)
         tan_delta = eps_imag / np.where(eps_real==0, np.nan, eps_real)
 
-        axs[0].set_title("Real part ε′")
-        axs[1].set_title("Imaginary part ε″")
-        axs[2].set_title("Tan δ = ε″/ε′")
-        axs[3].set_title("Cole-Cole plot: ε″ vs ε′")
+        if self.domain_var.get() == "Permittivity":
+            ylabels = ["Real part ε'", "Imaginary part ε''", "Tan δ = ε''/ε'", ("ε'","ε''")]
+        else:
+            ylabels = ["Real part M'", "Imaginary part M''", "Tan δ = M''/M'", ("M'","M''")]
+
+        # Gráfica 1
         axs[0].semilogx(self.freq, eps_real, 'k.', label='Data')
+        axs[0].set_xlabel("ω (rad/s)")
+        axs[0].set_ylabel(ylabels[0])
+
+        # Gráfica 2
         axs[1].semilogx(self.freq, eps_imag, 'k.', label='Data')
+        axs[1].set_xlabel("ω (rad/s)")
+        axs[1].set_ylabel(ylabels[1])
+
+        # Gráfica 3
         axs[2].semilogx(self.freq, tan_delta, 'k.', label='Data')
+        axs[2].set_xlabel("ω (rad/s)")
+        axs[2].set_ylabel(ylabels[2])
+
+        # Gráfica 4
         axs[3].plot(eps_real, eps_imag, 'ko', label='Data')
+        axs[3].set_xlabel(ylabels[3][0])
+        axs[3].set_ylabel(ylabels[3][1])
+
+
 
         self.model_metrics.clear()
         if not use_bayes:

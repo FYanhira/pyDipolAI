@@ -41,9 +41,9 @@ class ColeColeModulusModel(BaseModel):
         w = 2 * np.pi * f
         A = np.sqrt(1 + 2 * (w * tau)**(1 - alpha) * np.sin(np.pi * alpha / 2) + (w * tau)**(2 * (1 - alpha)))
         phi = np.arctan(((w * tau)**(1 - alpha) * np.cos(alpha * np.pi / 2)) / (1 + (w * tau)**(1 - alpha) * np.sin(alpha * np.pi / 2)))
-        denom = (M_s)**2 * (A)**2 + 2*A*(M_inf - M_s)*(M_s) * np.cos(phi) + (M_inf - M_s)**2
-        M_real = (M_inf * M_s) * ((M_s * A + (M_inf - M_s) * np.cos(phi)))* A / denom
-        M_imag = (M_inf * M_s) * (((M_inf - M_s) * np.sin(phi)))* A / denom
+        denom = ((M_s)**2 * (A)**2) + (2 * A * (M_inf - M_s) * (M_s * np.cos(phi))) + (M_inf - M_s)**2
+        M_real = (M_inf * M_s) * (((M_s * A + (M_inf - M_s) * np.cos(phi)))* A) / denom
+        M_imag = (M_inf * M_s) * ((((M_inf - M_s) * np.sin(phi)))* A)/ denom
         return M_real + 1j * M_imag
 
     def fit(self, f, M_real, M_imag, user_params=None):

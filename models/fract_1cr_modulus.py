@@ -40,7 +40,7 @@ class Fract1crModulusModel(BaseModel):
     def model_function(self, f, M_inf, M_s, tau, gamma):
         w = 2 * np.pi * f
         denom = (M_inf**2 + 2 * M_s * M_inf * (np.cos(gamma * np.pi / 2) * (w * tau)**gamma) + (M_s * (w * tau)**gamma)**2)
-        M_real = (M_inf * M_s * (M_s + (M_s + M_inf) * (np.cos(gamma * np.pi / 2) * (w * tau)**gamma) + M_s * (w * tau)**(2 * gamma))) / denom
+        M_real = (M_inf * M_s * (M_inf + (M_s + M_inf) * (np.cos(gamma * np.pi / 2) * (w * tau)**gamma) + M_s * (w * tau)**(2 * gamma))) / denom
         M_imag = (M_inf * M_s * (M_inf - M_s) * (np.sin(gamma * np.pi / 2) * (w * tau)**gamma)) / denom
         return M_real + 1j * M_imag
 
